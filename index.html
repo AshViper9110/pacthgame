@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>パッチゲーム</title>
+<link rel="icon" href="data:,">
+<title>パッチゲーム - C#</title>
 <style>
   /* 配色とレイアウトの基本設定（ダークテーマ） */
   :root { color-scheme: dark; }
@@ -94,12 +95,14 @@
   #tbar { height: 100%; width: 0; background: #ff8c1a; transition: width .3s; }
   #tbar.low { background: #ff2a2a; animation: blink .6s steps(2, start) infinite; }
   #soundBtn, #hintBtn { font-size: 12px; padding: 5px 10px; }
+  #engineNote { font-size: 12px; color: #5c5; margin-top: 8px; }
+  #engineNote.ready { color: #39ff14; }
 </style>
 </head>
 <body>
 <!-- 上半分: 攻撃の状況（接続図・サーバー状態・ログ）を表示 -->
 <div id="top">
-<div class="alert">⚠ INTRUSION DETECTED ⚠ 脆弱な関数を特定して修復せよ</div>
+<div class="alert">⚠ INTRUSION DETECTED ⚠ 脆弱なC#関数を特定して修復せよ</div>
 <h2 class="glitch" data-text="パッチゲーム">パッチゲーム</h2>
 <div class="hud">
   <span>ステージ <b id="stage"></b></span>
@@ -123,7 +126,7 @@
 <div id="culprits"></div>
 
 <div id="editorWrap" class="editor-wrap">
-  <div class="tab-bar">patch.js</div>
+  <div class="tab-bar">Patch.cs — Patch クラスのメソッドを直そう</div>
   <div class="editor-body">
     <div id="gutter"></div>
     <textarea id="editor" spellcheck="false" wrap="off"></textarea>
@@ -136,30 +139,42 @@
   <button id="hintBtn">ヒント（-10点）</button>
 </div>
 <div id="result"></div>
+<div id="engineNote">C#エンジン: 初回の検証時にブラウザ内へ読み込みます（インターネット接続が必要）</div>
 
 <details>
   <summary>書き方メモ</summary>
-  <div class="memo">if (条件) {
-  // 条件が真のときだけ実行
-} else {
-  // 条件が偽のときに実行
+  <div class="memo">// C# では文の終わりに「;」を書きます
+// クラス Patch の中のメソッドを直してください
+
+if (条件)
+{
+    // 条件が真のときだけ実行
+}
+else
+{
+    // 条件が偽のときに実行
 }
 
 例:
-if (name === "") {
-  return false;
-} else {
-  return true;
+if (name == "")
+{
+    return false;
+}
+else
+{
+    return true;
 }
 
-while (条件) {
-  // 条件が真の間、繰り返し実行
+while (条件)
+{
+    // 条件が真の間、繰り返し実行
 }
 
 例:
-let i = 0;
-while (i < 3) {
-  i = i + 1; // 変数を変えないと無限ループになる
+int i = 0;
+while (i < 3)
+{
+    i = i + 1; // 変数を変えないと無限ループになる
 }</div>
 </details>
 
@@ -172,254 +187,336 @@ while (i < 3) {
   </div>
 </div>
 
-<script>
+<script type="module">
 // 各問題: code の中のどれかの関数が原因。culprit がその関数名。
 // プレイヤーは原因の関数を選び、直してから tests で判定される。
 const problems = [
   {
     desc: "名前の検証。前後の空白を除いたうえで、1文字以上20文字以下なら許可してください。原因の関数を見つけてから直します。",
-    fn: "validateName",
-    culprit: "checkLength",
-    code: `// 前後の空白を取り除いて名前を整える
-function trimName(name) {
-  return name.trim();
-}
+    fn: "ValidateName",
+    culprit: "CheckLength",
+    code: `using System;
 
-// 名前の文字数を確認する
-function checkLength(name) {
-  return name.length > 0;
-}
+public static class Patch
+{
+    // 前後の空白を取り除いて名前を整える
+    public static string TrimName(string name)
+    {
+        return name.Trim();
+    }
 
-// 整えた名前を使って、長さを確認する
-function validateName(name) {
-  const n = trimName(name);
-  return checkLength(n);
+    // 名前の文字数を確認する
+    public static bool CheckLength(string name)
+    {
+        return name.Length > 0;
+    }
+
+    // 整えた名前を使って、長さを確認する
+    public static bool ValidateName(string name)
+    {
+        string n = TrimName(name);
+        return CheckLength(n);
+    }
 }`,
     tests: [
-      [["alice"], true],
-      [[""], false],
-      [["a".repeat(21)], false],
-      [["   "], false],
+      { args: ['"alice"'], expected: true },
+      { args: ['""'], expected: false },
+      { args: ["new string('a', 21)"], expected: false },
+      { args: ['"   "'], expected: false },
     ],
   },
   {
     desc: "ファイル名の検証。\"..\" と \"/\" を含む名前は拒否してください。原因の関数を見つけてから直します。",
-    fn: "isSafeFileName",
-    culprit: "hasSlash",
-    code: `// 入力の前後の空白を整える
-function normalize(p) {
-  return p.trim();
-}
+    fn: "IsSafeFileName",
+    culprit: "HasSlash",
+    code: `using System;
 
-// 「..」を含むかどうかを調べる
-function hasParent(p) {
-  return p.indexOf('..') !== -1;
-}
+public static class Patch
+{
+    // 入力の前後の空白を整える
+    public static string Normalize(string path)
+    {
+        return path.Trim();
+    }
 
-// 「/」を含むかどうかを調べる
-function hasSlash(p) {
-  return p.indexOf('/') === 0;
-}
+    // 「..」を含むかどうかを調べる
+    public static bool HasParent(string path)
+    {
+        return path.Contains("..");
+    }
 
-// 両方の条件を満たす名前だけを安全とみなす
-function isSafeFileName(name) {
-  const p = normalize(name);
-  return !hasParent(p) && !hasSlash(p);
+    // 「/」を含むかどうかを調べる
+    public static bool HasSlash(string path)
+    {
+        return path.IndexOf('/') == 0;
+    }
+
+    // 両方の条件を満たす名前だけを安全とみなす
+    public static bool IsSafeFileName(string name)
+    {
+        string p = Normalize(name);
+        return !HasParent(p) && !HasSlash(p);
+    }
 }`,
     tests: [
-      [["report.txt"], true],
-      [["../secret"], false],
-      [["a/b.txt"], false],
+      { args: ['"report.txt"'], expected: true },
+      { args: ['"../secret"'], expected: false },
+      { args: ['"a/b.txt"'], expected: false },
     ],
   },
   {
     desc: "残高チェック。引き出し額は1以上で、残高以下のときだけ許可してください。原因の関数を見つけてから直します。",
-    fn: "canWithdraw",
-    culprit: "hasEnough",
-    code: `// 金額が1以上かを調べる
-function isPositive(x) {
-  return x > 0;
-}
+    fn: "CanWithdraw",
+    culprit: "HasEnough",
+    code: `using System;
 
-// 残高で足りるかを調べる
-function hasEnough(balance, amount) {
-  return amount < balance;
-}
+public static class Patch
+{
+    // 金額が1以上かを調べる
+    public static bool IsPositive(int amount)
+    {
+        return amount > 0;
+    }
 
-// 金額が正で、残高で足りるときに引き出し可
-// 両方の確認はそれぞれの関数に任せる
-function canWithdraw(balance, amount) {
-  return isPositive(amount) && hasEnough(balance, amount);
+    // 残高で足りるかを調べる
+    public static bool HasEnough(int balance, int amount)
+    {
+        return amount < balance;
+    }
+
+    // 金額が正で、残高で足りるときに引き出し可
+    public static bool CanWithdraw(int balance, int amount)
+    {
+        return IsPositive(amount) && HasEnough(balance, amount);
+    }
 }`,
     tests: [
-      [[100, 50], true],
-      [[100, 200], false],
-      [[100, 0], false],
-      [[100, 100], true],
+      { args: ['100', '50'], expected: true },
+      { args: ['100', '200'], expected: false },
+      { args: ['100', '0'], expected: false },
+      { args: ['100', '100'], expected: true },
     ],
   },
   {
     desc: "ログイン試行の制限。直近の失敗回数が5回未満なら試行を許可してください。原因の関数を見つけてから直します。",
-    fn: "canTryLogin",
-    culprit: "countRecentFailures",
-    code: `// 直近のログから失敗の回数を数える
-function countRecentFailures(log) {
-  return log.filter(e => e.ok === true).length;
-}
+    fn: "CanTryLogin",
+    culprit: "CountRecentFailures",
+    code: `using System;
+using System.Linq;
 
-// 失敗回数が上限未満なら試行を許可する
-function canTryLogin(log) {
-  return countRecentFailures(log) < 5;
+public static class Patch
+{
+    // 直近のログから失敗の回数を数える
+    public static int CountRecentFailures(bool[] log)
+    {
+        return log.Count(ok => ok);
+    }
+
+    // 失敗回数が上限未満なら試行を許可する
+    public static bool CanTryLogin(bool[] log)
+    {
+        return CountRecentFailures(log) < 5;
+    }
 }`,
     tests: [
-      [[[]], true],
-      [[Array(4).fill({ ok: false })], true],
-      [[Array(5).fill({ ok: false })], false],
+      { args: ['new bool[0]'], expected: true },
+      { args: ['new[] { false, false, false, false }'], expected: true },
+      { args: ['new[] { false, false, false, false, false }'], expected: false },
     ],
   },
   {
     desc: "メールアドレスの簡易チェック。@を含み、空白を含まないものだけ許可してください。原因の関数を見つけてから直します。",
-    fn: "isValidEmail",
-    culprit: "hasSpace",
-    code: `// @を含むかどうかを調べる
-function hasAt(email) {
-  return email.includes('@');
-}
+    fn: "IsValidEmail",
+    culprit: "HasSpace",
+    code: `using System;
 
-// 空白を含むかどうかを調べる
-function hasSpace(email) {
-  return email.startsWith(' ');
-}
+public static class Patch
+{
+    // @を含むかどうかを調べる
+    public static bool HasAt(string email)
+    {
+        return email.Contains("@");
+    }
 
-// @があり、空白がないものを有効とする
-function isValidEmail(email) {
-  return hasAt(email) && !hasSpace(email);
+    // 空白を含むかどうかを調べる
+    public static bool HasSpace(string email)
+    {
+        return email.StartsWith(" ");
+    }
+
+    // @があり、空白がないものを有効とする
+    public static bool IsValidEmail(string email)
+    {
+        return HasAt(email) && !HasSpace(email);
+    }
 }`,
     tests: [
-      [["a@b.com"], true],
-      [["abc"], false],
-      [["a b@c.com"], false],
+      { args: ['"a@b.com"'], expected: true },
+      { args: ['"abc"'], expected: false },
+      { args: ['"a b@c.com"'], expected: false },
     ],
   },
   {
     desc: "パスワードの強度チェック。8文字以上で、英字と数字をどちらも含むものだけ許可してください。",
-    fn: "isStrongPassword",
-    culprit: "longEnough",
-    code: `// 8文字以上あるかを調べる
-function longEnough(pw) {
-  return pw.length > 8;
-}
+    fn: "IsStrongPassword",
+    culprit: "LongEnough",
+    code: `using System;
+using System.Text.RegularExpressions;
 
-// 英字を含むかを調べる
-function hasLetter(pw) {
-  return /[a-zA-Z]/.test(pw);
-}
+public static class Patch
+{
+    // 8文字以上あるかを調べる
+    public static bool LongEnough(string pw)
+    {
+        return pw.Length > 8;
+    }
 
-// 数字を含むかを調べる
-function hasDigit(pw) {
-  return /[0-9]/.test(pw);
-}
+    // 英字を含むかを調べる
+    public static bool HasLetter(string pw)
+    {
+        return new Regex("[a-zA-Z]").IsMatch(pw);
+    }
 
-// 3つの条件をすべて満たすときだけ強いと判定する
-function isStrongPassword(pw) {
-  return longEnough(pw) && hasLetter(pw) && hasDigit(pw);
+    // 数字を含むかを調べる
+    public static bool HasDigit(string pw)
+    {
+        return new Regex("[0-9]").IsMatch(pw);
+    }
+
+    // 3つの条件をすべて満たすときだけ強いと判定する
+    public static bool IsStrongPassword(string pw)
+    {
+        return LongEnough(pw) && HasLetter(pw) && HasDigit(pw);
+    }
 }`,
     tests: [
-      [["abcd1234"], true],
-      [["abc1"], false],
-      [["12345678"], false],
-      [["abcdefgh"], false],
+      { args: ['"abcd1234"'], expected: true },
+      { args: ['"abc1"'], expected: false },
+      { args: ['"12345678"'], expected: false },
+      { args: ['"abcdefgh"'], expected: false },
     ],
   },
   {
     desc: "ログイン後の移動先チェック。サイト内のパス（/ から始まるもの）だけ許可し、別のサイトへ飛ばせる形は拒否してください。",
-    fn: "isSafeRedirect",
-    culprit: "isProtocolRelative",
-    code: `// 先頭が「/」かどうかを調べる
-function startsWithSlash(url) {
-  return url.startsWith('/');
-}
+    fn: "IsSafeRedirect",
+    culprit: "IsProtocolRelative",
+    code: `using System;
 
-// 先頭が「//」（別のサイトを指せる形）かどうかを調べる
-function isProtocolRelative(url) {
-  return url.startsWith('///');
-}
+public static class Patch
+{
+    // 先頭が「/」かどうかを調べる
+    public static bool StartsWithSlash(string url)
+    {
+        return url.StartsWith("/");
+    }
 
-// サイト内の移動だけを許可する
-function isSafeRedirect(url) {
-  return startsWithSlash(url) && !isProtocolRelative(url);
+    // 先頭が「//」（別のサイトを指せる形）かどうかを調べる
+    public static bool IsProtocolRelative(string url)
+    {
+        return url.StartsWith("///");
+    }
+
+    // サイト内の移動だけを許可する
+    public static bool IsSafeRedirect(string url)
+    {
+        return StartsWithSlash(url) && !IsProtocolRelative(url);
+    }
 }`,
     tests: [
-      [["/home"], true],
-      [["//evil.example"], false],
-      [["https://evil.example"], false],
+      { args: ['"/home"'], expected: true },
+      { args: ['"//evil.example"'], expected: false },
+      { args: ['"https://evil.example"'], expected: false },
     ],
   },
   {
     desc: "投稿の削除権限。管理者か、その投稿の持ち主だけが削除できるようにしてください。",
-    fn: "canDelete",
-    culprit: "isOwner",
-    code: `// 管理者かどうかを調べる
-function isAdmin(user) {
-  return user.role === 'admin';
-}
+    fn: "CanDelete",
+    culprit: "IsOwner",
+    code: `using System;
 
-// 投稿の持ち主かどうかを調べる
-function isOwner(user, post) {
-  return post.ownerId !== undefined;
-}
+public static class Patch
+{
+    // 管理者かどうかを調べる
+    public static bool IsAdmin(string role)
+    {
+        return role == "admin";
+    }
 
-// 管理者か持ち主だけが削除できる
-function canDelete(user, post) {
-  return isAdmin(user) || isOwner(user, post);
+    // 投稿の持ち主かどうかを調べる
+    public static bool IsOwner(int userId, int ownerId)
+    {
+        return ownerId != 0;
+    }
+
+    // 管理者か持ち主だけが削除できる
+    public static bool CanDelete(string role, int userId, int ownerId)
+    {
+        return IsAdmin(role) || IsOwner(userId, ownerId);
+    }
 }`,
     tests: [
-      [[{ id: 1, role: "user" }, { ownerId: 1 }], true],
-      [[{ id: 2, role: "user" }, { ownerId: 1 }], false],
-      [[{ id: 3, role: "admin" }, { ownerId: 1 }], true],
+      { args: ['"user"', '1', '1'], expected: true },
+      { args: ['"user"', '2', '1'], expected: false },
+      { args: ['"admin"', '3', '1'], expected: true },
     ],
   },
   {
     desc: "アクセス回数の制限。直近1秒間のリクエストが5回未満のときだけ許可してください。",
-    fn: "canRequest",
-    culprit: "countRecent",
-    code: `// 直近の時間内にあったリクエストの数を数える
-function countRecent(times, now, windowMs) {
-  return times.filter(t => now - t > windowMs).length;
-}
+    fn: "CanRequest",
+    culprit: "CountRecent",
+    code: `using System;
+using System.Linq;
 
-// 直近1秒間のリクエストが5回未満なら許可する
-function canRequest(times, now) {
-  return countRecent(times, now, 1000) < 5;
+public static class Patch
+{
+    // 直近の時間内にあったリクエストの数を数える
+    public static int CountRecent(int[] times, int now, int windowMs)
+    {
+        return times.Count(t => now - t > windowMs);
+    }
+
+    // 直近1秒間のリクエストが5回未満なら許可する
+    public static bool CanRequest(int[] times, int now)
+    {
+        return CountRecent(times, now, 1000) < 5;
+    }
 }`,
     tests: [
-      [[[], 10000], true],
-      [[[9900, 9910, 9920, 9930, 9940], 10000], false],
-      [[[1, 2, 3, 4, 5, 6, 7], 10000], true],
+      { args: ['new int[0]', '10000'], expected: true },
+      { args: ['new[] { 9900, 9910, 9920, 9930, 9940 }', '10000'], expected: false },
+      { args: ['new[] { 1, 2, 3, 4, 5, 6, 7 }', '10000'], expected: true },
     ],
   },
   {
     desc: "画面に出す文字の無害化。「&」「<」「>」を、そのまま表示される安全な表記に置き換えてください。",
-    fn: "escapeHtml",
-    culprit: "escapeTags",
-    code: `// 「&」を「&amp;」に置き換える
-function escapeAmp(s) {
-  return s.replace(/&/g, '&amp;');
-}
+    fn: "EscapeHtml",
+    culprit: "EscapeTags",
+    code: `using System;
 
-// 「<」と「>」を無害な表記に置き換える
-function escapeTags(s) {
-  return s.replace(/</g, '&lt;');
-}
+public static class Patch
+{
+    // 「&」を「&amp;」に置き換える
+    public static string EscapeAmp(string s)
+    {
+        return s.Replace("&", "&amp;");
+    }
 
-// 画面に出す前に特殊な文字を無害な形にする
-function escapeHtml(s) {
-  return escapeTags(escapeAmp(s));
+    // 「<」と「>」を無害な表記に置き換える
+    public static string EscapeTags(string s)
+    {
+        return s.Replace("<", "&lt;");
+    }
+
+    // 画面に出す前に特殊な文字を無害な形にする
+    public static string EscapeHtml(string s)
+    {
+        return EscapeTags(EscapeAmp(s));
+    }
 }`,
     tests: [
-      [["hello"], "hello"],
-      [["<b>"], "&lt;b&gt;"],
-      [["a&b"], "a&amp;b"],
+      { args: ['"hello"'], expected: "hello" },
+      { args: ['"<b>"'], expected: "&lt;b&gt;" },
+      { args: ['"a&b"'], expected: "a&amp;b" },
     ],
   },
 ];
@@ -443,6 +540,7 @@ const MAX_FAILS = 3;
 let stageFails = 0;          // このステージで検証に失敗した回数（= 侵入度）
 let hintUsed = false;        // このステージでヒントを使ったか
 let locked = false;          // クリアや侵入の演出中は操作を止める
+let busy = false;            // C#のコンパイル・テスト実行中か
 let soundOn = true;
 const hintBtn = document.getElementById("hintBtn");
 const soundBtn = document.getElementById("soundBtn");
@@ -452,6 +550,7 @@ const culpritEl = document.getElementById("culprits");
 const editor = document.getElementById("editor");
 const editorWrap = document.getElementById("editorWrap");
 const resultEl = document.getElementById("result");
+const engineNote = document.getElementById("engineNote");
 const checkBtn = document.getElementById("check");
 const gutter = document.getElementById("gutter");
 const overlay = document.getElementById("overlay");
@@ -467,15 +566,15 @@ editor.addEventListener("keydown", (e) => {
   const t = editor.selectionEnd;
   if (e.key === "Tab") {
     e.preventDefault();
-    editor.value = editor.value.slice(0, s) + "  " + editor.value.slice(t);
-    editor.selectionStart = editor.selectionEnd = s + 2;
+    editor.value = editor.value.slice(0, s) + "    " + editor.value.slice(t);
+    editor.selectionStart = editor.selectionEnd = s + 4;
     updateGutter();
   } else if (e.key === "Enter") {
     e.preventDefault();
     const before = editor.value.slice(0, s);
     const line = before.slice(before.lastIndexOf("\n") + 1);
     const indent = line.match(/^\s*/)[0];
-    const extra = /[{(\[]\s*$/.test(line) ? "  " : "";
+    const extra = /[{(\[]\s*$/.test(line) ? "    " : "";
     const ins = "\n" + indent + extra;
     editor.value = before + ins + editor.value.slice(t);
     editor.selectionStart = editor.selectionEnd = s + ins.length;
@@ -577,13 +676,14 @@ function updateHud() {
   updateIntrusion();
 }
 
-// コード中の関数名を候補として並べ、原因を選ばせる
+// コード中のメソッド名を候補として並べ、原因を選ばせる
 function buildCulpritChoices(code) {
   culpritEl.innerHTML = "";
   const title = document.createElement("div");
   title.textContent = "原因の関数を選ぶ:";
   culpritEl.appendChild(title);
-  const names = [...code.matchAll(/function\s+(\w+)/g)].map(m => m[1]);
+  const pattern = /\b(?:public\s+|private\s+|internal\s+)?static\s+(?:bool|string|int|void|double)\s+(\w+)\s*\(/g;
+  const names = [...new Set([...code.matchAll(pattern)].map(m => m[1]))];
   names.forEach(name => {
     const label = document.createElement("label");
     const input = document.createElement("input");
@@ -602,14 +702,17 @@ function load() {
   descEl.textContent = p.desc.replace("原因の関数を見つけてから直します。", "");
   playAttackFlow(index);
   editor.value = p.code;
+  buildCulpritChoices(p.code);
   // 問題が変わったら検証の結果と、侵入度・ヒントをリセットする
   stageFails = 0;
   hintUsed = false;
   locked = false;
+  busy = false;
   hintBtn.disabled = false;
   stagedOK = false;
   stagedCode = null;
   prodBtn.disabled = true;
+  stageBtn.disabled = false;
   updateGutter();
 
   resultEl.textContent = "";
@@ -693,29 +796,322 @@ function restart() {
   load();
 }
 
-// 編集されたコードを関数として取り出し、テストを順に実行する
-function runTests(code, p) {
-  let fn;
+// ---- ブラウザ内C#エンジン ----
+// WasmSharp（.NET WASM + Roslyn）をCDNから読み込みます。
+// jsDelivr の dotnet.js は Vite 用の .dll import を含むため、
+// 実行時にアセットURLへ書き換えてからインラインモジュールとして起動します。
+// WasmSharp: https://github.com/JakeYallop/WasmSharp (Apache-2.0)
+const CSHARP_ENGINE_BASE = "https://cdn.jsdelivr.net/npm/@wasmsharp/core@0.10.2/";
+const CSHARP_RESULT_MARKER = "__PATCHGAME_RESULT__";
+const CSHARP_SOURCE_PREFIX = "using System; using System.Collections.Generic;\n";
+let csharpEngine = null;
+let csharpEnginePromise = null;
+let csharpProgress = null;
+
+function reportCSharpProgress(msg) {
+  engineNote.textContent = "C#エンジン: " + msg;
+  if (csharpProgress) csharpProgress(msg);
+}
+
+function csharpAssetUrl(base, rel) {
+  return new URL(rel.replace(/^\.\//, ""), base).href;
+}
+
+// インラインのESモジュールとして dotnet.js を実行する。
+// こうすると import.meta.url がページのURLになり、file:// でも動く。
+function loadInlineModule(source, readyName) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let timer = null;
+    const cleanup = () => {
+      if (timer !== null) clearTimeout(timer);
+      delete globalThis[readyName];
+    };
+    const finish = (ok, value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (ok) resolve(value);
+      else reject(value);
+    };
+
+    globalThis[readyName] = (mod) => finish(true, mod);
+    timer = setTimeout(() => {
+      finish(false, new Error("C#エンジンの起動がタイムアウトしました（インターネット接続を確認してください）"));
+    }, 180000);
+
+    const script = document.createElement("script");
+    script.type = "module";
+    script.textContent = source +
+      `\nglobalThis[${JSON.stringify(readyName)}]({ dotnet: ft, exit: mt, default: gt });` +
+      "\n//# sourceURL=patchgame-dotnet-inline.mjs";
+    script.onerror = () => {
+      finish(false, new Error("C#エンジンのモジュールを読み込めませんでした（インターネット接続を確認してください）"));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function initCSharpEngine() {
+  reportCSharpProgress("起動コードを取得中...");
+  const base = CSHARP_ENGINE_BASE;
+  let source;
   try {
-    fn = new Function(code + "\nreturn " + p.fn + ";")();
+    const res = await fetch(base + "dotnet.js", { cache: "force-cache" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    source = await res.text();
   } catch (e) {
-    return { ok: false, msg: "構文エラー: " + e.message };
+    throw new Error("C#エンジンの起動コードを取得できませんでした: " + (e.message || e));
   }
-  for (const [args, expected] of p.tests) {
-    let got;
-    try {
-      got = fn(...args);
-    } catch (e) {
-      return { ok: false, msg: "実行エラー: " + e.message };
+
+  // Vite が担当している .dll/.dat/.wasm の import を、CDNの絶対URLに置き換える
+  source = source.replace(
+    /^import\s+\*\s+as\s+(\w+)\s+from\s+["'](\.\/[^"']+\.js)["'];?/gm,
+    (_, name, rel) => `import * as ${name} from "${csharpAssetUrl(base, rel)}";`
+  );
+  source = source.replace(
+    /^import\s+(\w+)\s+from\s+["'](\.\/[^"']+)["'];?/gm,
+    (_, name, rel) => `const ${name} = "${csharpAssetUrl(base, rel)}";`
+  );
+  if (/^import\s+\S.*from\s+["']\.\//m.test(source)) {
+    throw new Error("C#エンジンの形式が想定と異なります。CDNのバージョンを確認してください。");
+  }
+
+  reportCSharpProgress("モジュールを起動中...");
+  const dotnetModule = await loadInlineModule(source, "__patchGameDotnetReady");
+
+  reportCSharpProgress("ランタイムを起動中...");
+  const { getAssemblyExports, getConfig } = await dotnetModule.dotnet
+    .withModuleConfig({
+      onConfigLoaded() {
+        reportCSharpProgress("ランタイム設定を読み込み中...");
+      },
+      onDownloadResourceProgress(loaded, total) {
+        if (total > 0) reportCSharpProgress(`C#エンジンをダウンロード中... ${loaded}/${total}`);
+      },
+    })
+    .withDiagnosticTracing(false)
+    .withConfig({ debugLevel: 0 })
+    .withConfig({ disableIntegrityCheck: true })
+    .create();
+
+  reportCSharpProgress("C#コンパイラを準備中...");
+  const config = getConfig();
+  const assemblyExports = await getAssemblyExports(config.mainAssemblyName);
+  const interop = assemblyExports.WasmSharp.Core.CompilationInterop;
+
+  const resolvedBase = new URL("./", base);
+  const resources = config.resources;
+  const satellite = resources.satelliteResources
+    ? Object.values(resources.satelliteResources).flatMap((x) => x)
+    : [];
+  const assemblies = resources.coreAssembly
+    .concat(resources.assembly)
+    .concat(satellite)
+    .filter((x) => x.resolvedUrl)
+    .map((x) => new URL(x.resolvedUrl, resolvedBase).href);
+  await interop.InitAsync(assemblies);
+
+  reportCSharpProgress("準備完了");
+  return { interop, compilationId: null };
+}
+
+async function getCSharpEngine(onProgress) {
+  csharpProgress = onProgress;
+  try {
+    if (csharpEngine) return csharpEngine;
+    if (!csharpEnginePromise) {
+      engineNote.classList.remove("ready");
+      csharpEnginePromise = initCSharpEngine()
+        .then((engine) => {
+          csharpEngine = engine;
+          engineNote.textContent = "C#エンジン: 準備完了";
+          engineNote.classList.add("ready");
+          return engine;
+        })
+        .catch((e) => {
+          csharpEnginePromise = null;
+          engineNote.textContent = "C#エンジン: 読み込み失敗";
+          engineNote.classList.remove("ready");
+          throw e;
+        });
     }
-    if (got !== expected) {
+    return await csharpEnginePromise;
+  } finally {
+    csharpProgress = null;
+  }
+}
+
+// ユーザーの C# の後ろにテスト用ハーネスを付け加える
+function buildTestSource(code, p) {
+  if (!code || !code.trim()) throw new Error("C#コードが空です。");
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.fn)) throw new Error("関数名が不正です。");
+  if (!Array.isArray(p.tests) || p.tests.length === 0) throw new Error("テストがありません。");
+
+  const lines = [];
+  lines.push(CSHARP_SOURCE_PREFIX.trimEnd());
+  lines.push(code);
+  lines.push("");
+  lines.push("namespace PatchGame.Generated");
+  lines.push("{");
+  lines.push("    public static class Harness");
+  lines.push("    {");
+  lines.push("        public static void Main(string[] args)");
+  lines.push("        {");
+  lines.push("            var results = new List<string>();");
+  for (const test of p.tests) {
+    const args = (test.args || []).join(", ");
+    const label = `${p.fn}(${args})`;
+    const call = `global::Patch.${p.fn}(${args})`;
+    lines.push(`            Run(results, ${csharpString(label)}, () => ${call}, ${csharpLiteral(test.expected)});`);
+  }
+  lines.push(`            Console.WriteLine(${csharpString(CSHARP_RESULT_MARKER)} + "[" + string.Join(",", results) + "]");`);
+  lines.push("        }");
+  lines.push("");
+  lines.push(...HARNESS_HELPERS.trim().split("\n"));
+  lines.push("    }");
+  lines.push("}");
+  return lines.join("\n") + "\n";
+}
+
+const HARNESS_HELPERS = String.raw`
+        private static void Run(List<string> results, string label, Func<object> call, object expected)
+        {
+            object actual = null;
+            string error = null;
+            bool ok;
+            try
+            {
+                actual = call();
+                ok = object.Equals(actual, expected);
+            }
+            catch (Exception ex)
+            {
+                ok = false;
+                error = ex.GetType().Name + ": " + ex.Message;
+            }
+            results.Add("{\"label\":" + JsonValue(label) + ",\"ok\":" + (ok ? "true" : "false") + ",\"expected\":" + JsonValue(expected) + ",\"actual\":" + JsonValue(actual) + ",\"error\":" + (error == null ? "null" : JsonValue(error)) + "}");
+        }
+
+        private static string JsonValue(object value)
+        {
+            if (value == null) return "null";
+            if (value is bool b) return b ? "true" : "false";
+            if (value is string s)
+            {
+                return "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t") + "\"";
+            }
+            if (value is int i) return i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return JsonValue(value.ToString());
+        }`;
+
+function csharpString(value) {
+  return JSON.stringify(String(value));
+}
+
+function csharpLiteral(value) {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error("テストの期待値が不正です。");
+    return String(value);
+  }
+  if (typeof value === "string") return csharpString(value);
+  throw new Error("テストの期待値が不正です。");
+}
+
+// コンパイルエラーの位置を、エディタ上の行番号に直して表示する
+function formatCSharpDiagnostics(diagnostics, source, userCode) {
+  if (!diagnostics || diagnostics.length === 0) return "C#コードのコンパイルに失敗しました";
+  const prefixLines = CSHARP_SOURCE_PREFIX.split("\n").length - 1;
+  const userLineCount = userCode.split("\n").length;
+  const lines = ["C#コンパイルエラー:"];
+  for (const d of diagnostics.slice(0, 8)) {
+    let where = "";
+    const start = d.location && typeof d.location.start === "number" ? d.location.start : null;
+    if (start !== null) {
+      const before = source.slice(0, start);
+      const line = before.split("\n").length;
+      const col = start - before.lastIndexOf("\n");
+      if (line > prefixLines && line <= prefixLines + userLineCount) {
+        where = `行 ${line - prefixLines}, 列 ${col}: `;
+      } else {
+        where = `内部行 ${line}, 列 ${col}: `;
+      }
+    }
+    lines.push(where + "[" + (d.id || "CS") + "] " + d.message);
+  }
+  if (diagnostics.length > 8) lines.push(`...ほか ${diagnostics.length - 8} 件`);
+  return lines.join("\n");
+}
+
+// 編集された C# コードをブラウザ内でコンパイルし、テストを順に実行する
+async function runTests(code, p, label) {
+  const prefix = label || "";
+  let engine;
+  try {
+    engine = await getCSharpEngine((msg) => {
+      resultEl.className = "";
+      resultEl.textContent = prefix + msg;
+    });
+  } catch (e) {
+    return {
+      ok: false,
+      fatal: true,
+      msg: "C#エンジンを読み込めませんでした。\n" + (e.message || e) + "\n（初回はインターネット接続が必要です）",
+    };
+  }
+
+  resultEl.className = "";
+  resultEl.textContent = prefix + "C#をコンパイルしてテスト中...";
+
+  let source;
+  try {
+    source = buildTestSource(code, p);
+  } catch (e) {
+    return { ok: false, fatal: true, msg: e.message };
+  }
+
+  try {
+    if (!engine.compilationId) {
+      engine.compilationId = engine.interop.CreateNewCompilation(source);
+    } else {
+      engine.interop.Recompile(engine.compilationId, source);
+    }
+
+    const diagnostics = JSON.parse(await engine.interop.GetDiagnosticsAsync(engine.compilationId));
+    const errors = diagnostics.filter((d) => d.severity === "Error");
+    if (errors.length) {
+      return { ok: false, msg: formatCSharpDiagnostics(errors, source, code) };
+    }
+
+    const result = JSON.parse(await engine.interop.RunAsync(engine.compilationId));
+    if (!result.success) {
+      const errors2 = (result.diagnostics || []).filter((d) => d.severity === "Error");
+      return { ok: false, msg: formatCSharpDiagnostics(errors2, source, code) };
+    }
+    if (result.stdErr) {
+      return { ok: false, msg: "実行時エラー:\n" + result.stdErr };
+    }
+
+    const out = result.stdOut || "";
+    const at = out.indexOf(CSHARP_RESULT_MARKER);
+    if (at < 0) {
+      return { ok: false, msg: "テスト結果を取得できませんでした。\n" + out.trim() };
+    }
+    const tests = JSON.parse(out.slice(at + CSHARP_RESULT_MARKER.length).trim());
+    const failed = tests.find((t) => !t.ok);
+    if (failed) {
+      const got = failed.error ? failed.error : JSON.stringify(failed.actual);
       return {
         ok: false,
-        msg: `テスト失敗: 入力 ${JSON.stringify(args)} → 期待 ${expected}, 実際 ${got}`,
+        msg: `テスト失敗: ${failed.label} → 期待 ${JSON.stringify(failed.expected)}, 実際 ${got}`,
       };
     }
+    return { ok: true, count: tests.length };
+  } catch (e) {
+    return { ok: false, fatal: true, msg: "C#の実行中にエラーが発生しました: " + (e.message || e) };
   }
-  return { ok: true };
 }
 
 function retriggerClass(cls) {
@@ -741,71 +1137,114 @@ function failWith(msg) {
 }
 
 // 原因の関数を選んでから直し、テストで正しさを判定する流れ
-// 選択が違う場合はライフを減らし、テストは実行しない
-checkBtn.addEventListener("click", () => {
+// 検証環境で合格したコードだけを本番に反映できる
+checkBtn.addEventListener("click", async () => {
+  if (busy) return;
   // 本番は、検証環境で合格した同じコードのときだけ反映できる
   if (!stagedOK || stagedCode !== editor.value) {
     resultEl.className = "ng";
     resultEl.textContent = "先に検証環境でテストしてください";
     return;
   }
-  pushLog("[PROD] 検証済みのパッチを本番に反映");
+
   const p = problems[index];
-  const r = runTests(editor.value, p);
-  if (!r.ok) {
-    failWith(r.msg);
-    return;
-  }
-  combo++;
-  // 得点 = 基本10 + コンボ + 正確さ（検証の失敗が少ないほど高い）
-  const comboBonus = (combo - 1) * 5;
-  const accuracy = Math.max(0, 20 - stageFails * 10);
-  const gain = 10 + comboBonus + accuracy;
-  const detail = `基本10 + コンボ${comboBonus} + 正確さ${accuracy}`;
-  score += gain;
-  locked = true;
-  sfx.clear();
-  updateHud();
-  pushLog("[OK] パッチ適用、" + srvName(index) + " を隔離解除");
-  resultEl.className = "ok";
-  resultEl.textContent = `パッチ成功！ +${gain}点（${detail}）`;
-  retriggerClass("flash-ok");
-  const isLast = index === problems.length - 1;
-  setTimeout(() => {
-    if (isLast) {
-      showOverlay("全ステージクリア！", `最終スコア: ${score} ／ ランク ${rankOf(score)}`, "もう一度遊ぶ", restart, "#6f6");
-    } else {
-      showOverlay("STAGE CLEAR", `+${gain}点（${detail}）／ コンボ ×${combo}`, "次のステージへ", () => { index++; load(); }, "#6f6");
+  const code = editor.value;
+  let applied = false;
+  busy = true;
+  checkBtn.disabled = true;
+  resultEl.className = "";
+  resultEl.textContent = "本番環境: C#をコンパイルしてテスト中...";
+
+  try {
+    pushLog("[PROD] 検証済みのパッチを本番に反映");
+    const r = await runTests(code, p, "本番環境: ");
+    if (!r.ok) {
+      if (r.fatal) {
+        resultEl.className = "ng";
+        resultEl.textContent = r.msg;
+        return;
+      }
+      failWith(r.msg);
+      return;
     }
-  }, 500);
+
+    applied = true;
+    combo++;
+    // 得点 = 基本10 + コンボ + 正確さ（検証の失敗が少ないほど高い）
+    const comboBonus = (combo - 1) * 5;
+    const accuracy = Math.max(0, 20 - stageFails * 10);
+    const gain = 10 + comboBonus + accuracy;
+    const detail = `基本10 + コンボ${comboBonus} + 正確さ${accuracy}`;
+    score += gain;
+    locked = true;
+    sfx.clear();
+    updateHud();
+    pushLog("[OK] パッチ適用、" + srvName(index) + " を隔離解除");
+    resultEl.className = "ok";
+    resultEl.textContent = `パッチ成功！ +${gain}点（${detail}）`;
+    retriggerClass("flash-ok");
+    const isLast = index === problems.length - 1;
+    setTimeout(() => {
+      if (isLast) {
+        showOverlay("全ステージクリア！", `最終スコア: ${score} ／ ランク ${rankOf(score)}`, "もう一度遊ぶ", restart, "#6f6");
+      } else {
+        showOverlay("STAGE CLEAR", `+${gain}点（${detail}）／ コンボ ×${combo}`, "次のステージへ", () => { index++; load(); }, "#6f6");
+      }
+    }, 500);
+  } finally {
+    busy = false;
+    if (!applied) {
+      checkBtn.disabled = !(stagedOK && stagedCode === editor.value);
+    }
+  }
 });
 
 load();
 // 検証環境: テストを実行するだけで、ライフは減らさない
-stageBtn.addEventListener("click", () => {
+stageBtn.addEventListener("click", async () => {
+  if (busy) return;
   const p = problems[index];
-  const r = runTests(editor.value, p);
-  if (r.ok) {
-    stagedOK = true;
-    stagedCode = editor.value;
-    prodBtn.disabled = false;
-    sfx.pass();
-    pushLog("[STAGING] 検証環境で全テスト合格");
-    resultEl.className = "ok";
-    resultEl.textContent = "検証環境: 合格。本番に反映できます";
-  } else {
-    stagedOK = false;
-    prodBtn.disabled = true;
-    pushLog("[STAGING] 検証で失敗: " + r.msg);
-    resultEl.className = "ng";
-    resultEl.textContent = "検証環境: 失敗（本番には反映されません）\n" + r.msg;
-    retriggerClass("shake");
-    sfx.fail();
-    // 検証に失敗すると、攻撃が進んで侵入度が上がる。上限に達すると侵入される
-    stageFails++;
-    updateIntrusion();
-    pushLog("[WARN] 攻撃が進行: 侵入度 " + stageFails + "/" + MAX_FAILS);
-    if (stageFails >= MAX_FAILS) onBreach();
+  const code = editor.value;
+  busy = true;
+  stageBtn.disabled = true;
+  checkBtn.disabled = true;
+  resultEl.className = "";
+  resultEl.textContent = "検証環境: C#をコンパイルしてテスト中...";
+
+  try {
+    const r = await runTests(code, p, "検証環境: ");
+    if (r.ok) {
+      stagedOK = true;
+      stagedCode = code;
+      sfx.pass();
+      pushLog("[STAGING] 検証環境で全テスト合格");
+      resultEl.className = "ok";
+      resultEl.textContent = `検証環境: 合格（${r.count}件）。本番に反映できます`;
+    } else if (r.fatal) {
+      // エンジンの読み込み失敗など、コードの誤りではない場合はゲームを進めない
+      stagedOK = false;
+      stagedCode = null;
+      pushLog("[STAGING] 検証を実行できません: " + r.msg);
+      resultEl.className = "ng";
+      resultEl.textContent = r.msg;
+    } else {
+      stagedOK = false;
+      stagedCode = null;
+      pushLog("[STAGING] 検証で失敗: " + r.msg);
+      resultEl.className = "ng";
+      resultEl.textContent = "検証環境: 失敗（本番には反映されません）\n" + r.msg;
+      retriggerClass("shake");
+      sfx.fail();
+      // 検証に失敗すると、攻撃が進んで侵入度が上がる。上限に達すると侵入される
+      stageFails++;
+      updateIntrusion();
+      pushLog("[WARN] 攻撃が進行: 侵入度 " + stageFails + "/" + MAX_FAILS);
+      if (stageFails >= MAX_FAILS) onBreach();
+    }
+  } finally {
+    busy = false;
+    stageBtn.disabled = false;
+    checkBtn.disabled = !(stagedOK && stagedCode === editor.value);
   }
 });
 
